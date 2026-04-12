@@ -1,0 +1,44 @@
+REVIEWER COMMENTS - Manuscript #AI-2026-0142
+"Large Language Model-Assisted Systematic Review Screening: A Validation Study"
+
+============================================================
+REVIEWER 1 (Associate Editor)
+============================================================
+
+Major Comments:
+
+1. The authors claim that LLM-assisted screening achieves "comparable sensitivity" to human reviewers (line 142), but the confidence intervals for sensitivity overlap substantially with those of a coin flip for several subgroup analyses (Table 3). The authors should provide a more nuanced discussion of when the tool performs well vs. poorly, rather than making blanket claims about equivalence.
+
+2. The study uses GPT-4 as the sole LLM evaluated. Given the rapid pace of model development, the generalizability of these findings is limited. The authors should discuss how performance might vary across models (e.g., Claude, Gemini, open-source alternatives) and whether their pipeline is model-agnostic.
+
+3. The cost analysis in Section 3.4 compares LLM screening costs to research assistant wages but ignores the cost of verification by a senior researcher, which the authors themselves recommend in the Discussion. Please revise the cost-effectiveness calculations to include this oversight step.
+
+Minor Comments:
+
+4. Table 2 reports precision to 4 decimal places, which implies a level of accuracy not supported by the sample size. Please round to 2 decimal places.
+
+============================================================
+REVIEWER 2 (Statistical Reviewer)
+============================================================
+
+Major Comments:
+
+1. The inter-rater reliability between the LLM and human screeners was assessed using Cohen's kappa, but this metric is known to be paradoxically low when prevalence is extreme (the "kappa paradox"). Given that only 3.2% of screened abstracts were ultimately included, the authors should supplement kappa with prevalence-adjusted bias-adjusted kappa (PABAK) or report agreement metrics alongside prevalence indices.
+
+2. The sample of 2,000 abstracts was drawn from a single systematic review on bariatric surgery outcomes. The authors generalize their findings to "systematic review screening" broadly (title, abstract, discussion), but screening difficulty varies enormously by topic. A diabetes drug efficacy review has very different inclusion criteria complexity than a qualitative study of patient experiences. This limitation needs explicit acknowledgment and the title should be revised to reflect the narrow scope.
+
+3. The authors do not report how they handled abstracts that were ambiguous or borderline. Human screeners typically discuss these — what was the LLM's equivalent process? Was there a confidence threshold? This is a critical methodological gap.
+
+============================================================
+REVIEWER 3 (Clinical Domain Expert)
+============================================================
+
+Major Comments:
+
+1. From a clinical perspective, the missed studies (false negatives) in Table 4 are concerning. Three of the five missed RCTs reported significant adverse events that would have altered the review's safety conclusions. The authors should analyze whether false negatives cluster around certain study characteristics (e.g., smaller sample sizes, non-English abstracts, or studies with mixed outcomes).
+
+Minor Comments:
+
+2. The term "AI-assisted" is used interchangeably with "LLM-assisted" and "automated" throughout the manuscript. Please standardize terminology per the CONSORT-AI guidelines.
+
+3. Reference 14 appears to be a preprint that has since been published in a peer-reviewed journal. Please update the citation.
