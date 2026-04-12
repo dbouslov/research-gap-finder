@@ -149,7 +149,7 @@ An interactive web tool that identifies under-explored research questions by ana
 - Highlights gaps between what is studied and what reviews recommend
 - Suggests concrete research questions with feasibility estimates
 
-**GitHub:** [placeholder — will be updated after session]
+**GitHub:** https://github.com/dbouslov/research-gap-finder
 
 **Run locally:**
 ```bash
@@ -173,7 +173,7 @@ cd research-gap-finder
 | MCP server directory | [github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) |
 | Anthropic API console | [console.anthropic.com](https://console.anthropic.com) |
 | Node.js download | [nodejs.org](https://nodejs.org) |
-| CCAIR GitHub | [placeholder] |
+| CCAIR GitHub | https://github.com/dbouslov/research-gap-finder |
 
 ---
 
