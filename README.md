@@ -14,13 +14,21 @@ A web app that searches PubMed in real-time, identifies research gaps in any med
 
 ## Run Locally
 
-Just open `index.html` in a browser. No server, no build step, no dependencies to install.
-
-For the best experience (live PubMed search), serve it via HTTP:
+### Basic mode (no server required)
 ```bash
+# Just serve the files — PubMed search works, analysis is algorithmic
 npx http-server -p 8080 --cors
-# Then open http://localhost:8080/index.html
+# Open http://localhost:8080
 ```
+
+### AI mode (recommended)
+```bash
+# Uses Claude to do real cross-paper research gap analysis
+ANTHROPIC_API_KEY=sk-ant-... node server.js
+# Open http://localhost:3000
+```
+
+The AI mode sends paper abstracts to Claude for genuine research analysis instead of keyword matching. This produces significantly better gap identification and project ideas.
 
 ## Tech Stack
 
