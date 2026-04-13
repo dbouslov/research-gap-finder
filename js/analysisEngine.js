@@ -1681,73 +1681,124 @@
   // MAIN PIPELINE  (Step 1)
   // -----------------------------------------------------------------------
 
+  // -----------------------------------------------------------------------
+  // AI-POWERED ANALYSIS (calls server.js → Claude API)
+  // -----------------------------------------------------------------------
+
+  function analyzeWithAI(papers, query) {
+    statusUpdate("Sending " + papers.length + " papers to Claude for deep analysis...");
+    console.log("AnalysisEngine: attempting AI analysis via /api/analyze");
+
+    return fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ papers: papers, query: query })
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error("Server returned " + res.status);
+      return res.json();
+    })
+    .then(function(result) {
+      if (result.error) throw new Error(result.error);
+      if (!result.gaps || !result.gaps.length) throw new Error("AI returned no gaps");
+      return result;
+    });
+  }
+
+  function checkAIAvailable() {
+    return fetch("/api/status")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { return data && data.aiEnabled; })
+      .catch(function() { return false; });
+  }
+
+  // -----------------------------------------------------------------------
+  // ALGORITHMIC ANALYSIS (fallback when AI is unavailable)
+  // -----------------------------------------------------------------------
+
+  function analyzeAlgorithmic(papers) {
+    return new Promise(function(resolve) {
+      statusUpdate("Running local analysis on " + papers.length + " papers...");
+
+      setTimeout(function() {
+        var gaps = detectGaps(papers);
+        statusUpdate("Found " + gaps.length + " gaps. Generating project ideas...");
+
+        setTimeout(function() {
+          var ideas = generateIdeas(gaps, papers);
+          statusUpdate("Generated " + ideas.length + " ideas. Building landscape...");
+
+          setTimeout(function() {
+            var landscape = buildLandscape(papers, gaps);
+            resolve({ gaps: gaps, ideas: ideas, landscape: landscape });
+          }, 800);
+        }, 600);
+      }, 400);
+    });
+  }
+
+  // -----------------------------------------------------------------------
+  // MAIN PIPELINE — tries AI first, falls back to algorithmic
+  // -----------------------------------------------------------------------
+
   function analyze(papers) {
-    try {
-      if (!papers || !papers.length) {
-        console.warn("AnalysisEngine: no papers to analyze");
-        dispatch("rgf:status-update", { status: "error", message: "No papers to analyze." });
-        return;
-      }
-
-      console.log("AnalysisEngine: analyzing " + papers.length + " papers");
-      statusUpdate("Analyzing " + papers.length + " papers...");
-
-      // Step 1: Detect gaps (with realistic delay for visual progress)
-      setTimeout(function () {
-        try {
-          statusUpdate("Scanning " + papers.length + " abstracts for research gaps...");
-          var gaps = detectGaps(papers);
-
-          statusUpdate("Found " + gaps.length + " research gaps. Generating project ideas...");
-
-          // Step 2: Generate ideas
-          setTimeout(function () {
-            try {
-              var ideas = generateIdeas(gaps, papers);
-
-              statusUpdate("Generated " + ideas.length + " project ideas. Building research landscape...");
-
-              // Step 3: Build landscape
-              setTimeout(function () {
-                try {
-                  var landscape = buildLandscape(papers, gaps);
-
-                  // Store results in shared state
-                  if (window.ResearchData) {
-                    window.ResearchData.gaps = gaps;
-                    window.ResearchData.ideas = ideas;
-                    window.ResearchData.landscape = landscape;
-                    window.ResearchData.status = "complete";
-                    window.ResearchData.statusMessage = "Analysis complete";
-                  }
-
-                  // Dispatch completion event
-                  dispatch("rgf:analysis-ready", {
-                    gaps: gaps,
-                    ideas: ideas,
-                    landscape: landscape
-                  });
-
-                  console.log("AnalysisEngine: analysis complete — " + gaps.length + " gaps, " + ideas.length + " ideas, " + landscape.clusters.length + " clusters");
-                } catch (e) {
-                  console.error("AnalysisEngine: landscape building failed", e);
-                  dispatch("rgf:status-update", { status: "error", message: "Landscape building failed: " + e.message });
-                }
-              }, 1500);
-            } catch (e) {
-              console.error("AnalysisEngine: idea generation failed", e);
-              dispatch("rgf:status-update", { status: "error", message: "Idea generation failed: " + e.message });
-            }
-          }, 1200);
-        } catch (e) {
-          console.error("AnalysisEngine: gap detection failed", e);
-          dispatch("rgf:status-update", { status: "error", message: "Gap detection failed: " + e.message });
-        }
-      }, 800);
-    } catch (e) {
-      console.error("AnalysisEngine: analysis failed", e);
-      dispatch("rgf:status-update", { status: "error", message: "Analysis failed: " + e.message });
+    if (!papers || !papers.length) {
+      console.warn("AnalysisEngine: no papers to analyze");
+      dispatch("rgf:status-update", { status: "error", message: "No papers to analyze." });
+      return;
     }
+
+    var query = (window.ResearchData && window.ResearchData.query) || "";
+    console.log("AnalysisEngine: analyzing " + papers.length + " papers");
+    statusUpdate("Analyzing " + papers.length + " papers...");
+
+    // Try AI first, fall back to algorithmic
+    checkAIAvailable()
+      .then(function(aiReady) {
+        if (aiReady) {
+          console.log("AnalysisEngine: AI server available — using Claude for analysis");
+          statusUpdate("AI analysis server detected. Sending papers to Claude...");
+          return analyzeWithAI(papers, query);
+        } else {
+          console.log("AnalysisEngine: no AI server — using algorithmic analysis");
+          statusUpdate("Running local gap analysis...");
+          return analyzeAlgorithmic(papers);
+        }
+      })
+      .catch(function(err) {
+        // AI failed, fall back to algorithmic
+        console.warn("AnalysisEngine: AI analysis failed (" + err.message + "), falling back to algorithmic");
+        statusUpdate("AI unavailable — running local analysis...");
+        return analyzeAlgorithmic(papers);
+      })
+      .then(function(result) {
+        if (!result) return;
+
+        // Store results in shared state
+        if (window.ResearchData) {
+          window.ResearchData.gaps = result.gaps || [];
+          window.ResearchData.ideas = result.ideas || [];
+          window.ResearchData.landscape = result.landscape || null;
+          window.ResearchData.status = "complete";
+          window.ResearchData.statusMessage = "Analysis complete";
+        }
+
+        // Dispatch completion event
+        dispatch("rgf:analysis-ready", {
+          gaps: result.gaps || [],
+          ideas: result.ideas || [],
+          landscape: result.landscape || null
+        });
+
+        console.log("AnalysisEngine: analysis complete — " +
+          (result.gaps || []).length + " gaps, " +
+          (result.ideas || []).length + " ideas, " +
+          ((result.landscape && result.landscape.clusters) || []).length + " clusters");
+      })
+      .catch(function(err) {
+        console.error("AnalysisEngine: all analysis paths failed", err);
+        dispatch("rgf:status-update", { status: "error", message: "Analysis failed: " + err.message });
+      });
   }
 
   // -----------------------------------------------------------------------
